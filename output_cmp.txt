@@ -1,0 +1,57 @@
+loaded x0: exp/fql/Debug/sd000_s_10954661.0.20260603_231918/x0_all.npy -> original_shape=(1000000, 256, 8), flattened_rows=256000000, sampled=(1000000, 8)
+loaded x0_hat: exp/fql/Debug/sd000_s_10954661.0.20260603_231918/x0_hat_all.npy -> original_shape=(1000000, 8), flattened_rows=1000000, sampled=(1000000, 8)
+
+comparison sample count per file: 1000000
+
+== x0 ==
+samples: 1000000
+dim: 8
+global_mean: 0.000186
+global_std: 0.999836
+mean_abs_per_dim_mean: 0.000476
+mean_abs_per_dim_max: 0.000981
+std_per_dim_mean: 0.999836
+std_per_dim_min: 0.998695
+std_per_dim_max: 1.000887
+norm_mean: 2.741266
+norm_std: 0.694864
+norm_q05: 1.652408
+norm_q50: 2.709830
+norm_q95: 3.937825
+cov_trace: 7.997380
+cov_diag_mean: 0.999673
+cov_diag_std: 0.001296
+cov_offdiag_rms: 0.000948
+
+== x0_hat ==
+samples: 1000000
+dim: 8
+global_mean: -0.000929
+global_std: 1.015602
+mean_abs_per_dim_mean: 0.094461
+mean_abs_per_dim_max: 0.153688
+std_per_dim_mean: 1.010228
+std_per_dim_min: 0.986104
+std_per_dim_max: 1.076284
+norm_mean: 2.807075
+norm_std: 0.609855
+norm_q05: 1.820379
+norm_q50: 2.799014
+norm_q95: 3.815044
+cov_trace: 8.170272
+cov_diag_mean: 1.021284
+cov_diag_std: 0.055515
+cov_offdiag_rms: 0.040441
+
+== comparison ==
+note: this is distributional, not sample-by-sample, since x0_all and x0_hat_all are not row-aligned
+mean_abs_diff_per_dim_mean: 0.094368
+mean_abs_diff_per_dim_max: 0.154443
+std_abs_diff_per_dim_mean: 0.016753
+std_abs_diff_per_dim_max: 0.075398
+norm_mean_diff: 0.065809
+norm_std_diff: 0.085009
+cov_frobenius_diff: 0.363200
+cov_diag_mean_abs_diff: 0.034263
+sliced_wasserstein: 0.092318
+

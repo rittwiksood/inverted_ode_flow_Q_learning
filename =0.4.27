@@ -1,0 +1,43 @@
+Collecting jax
+  Using cached jax-0.4.30-py3-none-any.whl.metadata (22 kB)
+Requirement already satisfied: jaxlib in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (0.4.30)
+Requirement already satisfied: dm-control in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (1.0.27)
+Requirement already satisfied: ml-dtypes>=0.2.0 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from jax) (0.5.4)
+Requirement already satisfied: numpy>=1.22 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from jax) (2.0.2)
+Requirement already satisfied: opt-einsum in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from jax) (3.4.0)
+Requirement already satisfied: scipy>=1.9 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from jax) (1.13.1)
+Requirement already satisfied: importlib-metadata>=4.6 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from jax) (8.7.1)
+Requirement already satisfied: absl-py>=0.7.0 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (2.3.1)
+Requirement already satisfied: dm-env in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (1.6)
+Requirement already satisfied: dm-tree!=0.1.2 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (0.1.7)
+Requirement already satisfied: glfw in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (2.9.0)
+Requirement already satisfied: labmaze in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (1.0.6)
+Requirement already satisfied: lxml in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (6.0.0)
+Collecting mujoco>=3.2.7 (from dm-control)
+  Using cached mujoco-3.5.0.tar.gz (912 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: protobuf>=3.19.4 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (6.32.0)
+Requirement already satisfied: pyopengl>=3.1.4 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (3.1.10)
+Requirement already satisfied: pyparsing>=3.0.0 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (3.2.3)
+Requirement already satisfied: requests in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (2.32.5)
+Requirement already satisfied: setuptools!=50.0.0 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (80.9.0)
+Requirement already satisfied: tqdm in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from dm-control) (4.67.1)
+Requirement already satisfied: zipp>=3.20 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from importlib-metadata>=4.6->jax) (3.23.0)
+Requirement already satisfied: etils[epath] in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from mujoco>=3.2.7->dm-control) (1.5.1)
+Requirement already satisfied: fsspec in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from etils[epath]->mujoco>=3.2.7->dm-control) (2025.7.0)
+Requirement already satisfied: importlib_resources in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from etils[epath]->mujoco>=3.2.7->dm-control) (6.5.2)
+Requirement already satisfied: typing_extensions in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from etils[epath]->mujoco>=3.2.7->dm-control) (4.14.1)
+Requirement already satisfied: charset_normalizer<4,>=2 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from requests->dm-control) (3.4.3)
+Requirement already satisfied: idna<4,>=2.5 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from requests->dm-control) (3.10)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from requests->dm-control) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in /home/sood26/.conda/envs/r_fql_09/lib/python3.9/site-packages (from requests->dm-control) (2025.8.3)
+Using cached jax-0.4.30-py3-none-any.whl (2.0 MB)
+Building wheels for collected packages: mujoco
+  Building wheel for mujoco (pyproject.toml): started
+  Building wheel for mujoco (pyproject.toml): finished with status 'error'
+Failed to build mujoco
