@@ -10,38 +10,27 @@
  <div>
  </div>
 
-## Overview
+## Introduction
 
-Flow Q-learning (FQL) is a simple and performance data-driven RL algorithm
-that leverages an expressive *flow-matching* policy
-to model complex action distributions in data.
+We have implemented an inverter to a ODE model. We use Flow Q-Learning to create this ODE. Flow Q-learning (FQL) is a data-driven RL algorithm that inhibits a flow-matching policy to model action distributions in data that are complex in nature. 
+
 
 ## Installation
 
-To install the full dependencies, simply run:
-```bash
-pip install -r requirements.txt
-```
+1. conda env create -n <env_name> -f environment.yml
+
+2. conda activate <env_name> 
 
 ## Usage
 
-The main implementation of FQL is in [agents/fql.py](agents/fql.py),
+The main implementation of FQL is in [agents/fql.py],
 
-
-## Tips for hyperparameter tuning
-
-Here are some general tips for FQL's hyperparameter tuning for new tasks:
-
-* The most important hyperparameter of FQL is the BC coefficient (`--agent.alpha`).
-  This needs to be individually tuned for each environment.
-* Although this was not used in the original paper,
-  setting `--agent.normalize_q_loss=True` makes `alpha` invariant to the scale of the Q-values.
-  **For new environments, we highly recommend turning on this flag** (`--agent.normalize_q_loss=True`)
-  and tuning `alpha` starting from `[0.03, 0.1, 0.3, 1, 3, 10]`.
-* For other hyperparameters, you may use the default values in `agents/fql.py`.
-  For some tasks, setting `--agent.q_agg=min` (to enable clipped double Q-learning) may slightly improve performance.
-  See the ablation study in the paper for more details.
-* For pixel-based environments, don't forget to set `--agent.encoder=impala_small` (or larger encoders),
-  `--p_aug=0.5`, and `--frame_stack=3`.
 
 ## Reproducing the main results
+
+1. Train the ODE model:
+
+ We have trained on various environments with different tasks. This paper discusses results on the following environment:
+
+ python main.py --env_name=antmaze-large-navigate-singletask-v0 --agent.q_agg=min --agent.alpha=10
+
