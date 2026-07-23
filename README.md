@@ -77,11 +77,13 @@ Each run produces a checkpoint directory under `exp/fql/Debug/<run_name>/`.
 
 ### 2. Dataset subset-inversion grid
 
-Runs the three removal strategies (random, quality-guided, state-region) crossed with nine removal fractions (10%–90%), inverts the removed transitions, and computes the full action-space and noise-space divergence suite.
+Runs the three removal strategies (random, quality-guided, state-region) crossed with nine removal fractions (10%–90%), inverts the removed transitions, and computes the full action-space and noise-space divergence suite. For the specific result we have put in the paper, we have used 'quality' strategy and removal fraction as 30%. We can change that if we want to see another result. We can remove --strategy and --removal_frac line if we want all the files for all removal strategies.  
 
 ```bash
 python run_subset_analysis.py \
     --exp_dir  exp/fql/Debug/<antmaze_run> \
+    --strategy quality \
+    --removal_frac 0.30 \
     --save_dir analysis/subset_grid
 ```
 
@@ -121,15 +123,6 @@ python ood_probe_ladder.py \
 
 Produces `ood_ladder_metrics.json` (containing the KS statistic, symmetric KL, tail mass, and AUROC for every probe) plus the four-panel ladder figure. This is the source of the AUROC values reported in the paper's out-of-distribution detection results.
 
-Optional rungs, if a second dataset or checkpoint is available:
-```bash
-python ood_probe_ladder.py \
-    --exp_dir        exp/fql/Debug/<antmaze_run> \
-    --cross_env_name antmaze-large-explore-singletask-v0 \
-    --alt_exp_dir    exp/fql/Debug/<antmaze_seed1_run> \
-    --n_probe 2000 --save_dir analysis/ood_ladder_full
-```
-
 ---
 
 ### 5. PCA overlay teaser figure
@@ -146,7 +139,7 @@ python pca_insupport_vs_ood.py \
     --save_dir  figures/
 ```
 
-Use `--ood_probe gauss --sigma 0.5` or `--ood_probe uniform` to reproduce the other probe variants. A separate script producing independent (non-overlaid) in-support and OOD PCA panels is available in `pca_noise_visualization.py`.
+A separate script producing independent (non-overlaid) in-support and OOD PCA panels is available in `pca_noise_visualization.py`.
 
 ---
 
@@ -155,16 +148,10 @@ Use `--ood_probe gauss --sigma 0.5` or `--ood_probe uniform` to reproduce the ot
 Reproduces every main-text figure directly from the logged JSON metrics, in one command:
 
 ```bash
-python make_paper_figures.py \
-    --antmaze   consolidated_data.txt \
-    --cube      consolidated_data_cube_single_play.txt \
-    --humanoid  consolidated_data_humanoidmaze.txt \
+python make_paper_figures.py \  
     --ood_json  analysis/ood_ladder/ood_ladder_metrics.json \
-    --mode_json analysis/mode_sweep/mode_sweep_metrics.json \
     --outdir    paper_figures
 ```
-
-Outputs `fig2_concept`, `fig4_crossenv`, `fig5_modesweep`, `fig6_ood_ladder`, and `fig7_anisotropy` as vector PDFs with embedded fonts, ready for direct inclusion in the paper.
 
 ---
 
