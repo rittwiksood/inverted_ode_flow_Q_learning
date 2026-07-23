@@ -16,11 +16,10 @@ This repository implements an **ODE inversion pipeline** for Flow Q-Learning (FQ
 
 FQL trains a behavioral-cloning (BC) flow that transports a standard Gaussian noise space onto the behavioral action distribution via a learned vector field. This repository builds the **inverse map**: given a trained flow, a state, and an action, we integrate the vector field backward in time to recover the latent noise that produced (or could have produced) that action, and we study the distributional properties of the recovered noise across:
 
-- **81 controlled dataset-perturbation conditions** (3 removal strategies × 9 removal fractions × 3 environments)
+- **Various controlled dataset-perturbation conditions** (3 removal strategies × 9 removal fractions × 3 environments)
 - **A single-mode deletion stress test** that pushes action-space divergence far beyond the perturbation grid
 - **An out-of-support probe ladder** that tests the inverse map on actions and state–action pairings the flow never saw during training
 
-For the full empirical findings and their implications, see the accompanying paper (citation below).
 
 ---
 
@@ -45,8 +44,8 @@ For the full empirical findings and their implications, see the accompanying pap
 ## Installation
 
 ```bash
-conda env create -n fql_env -f environment.yml
-conda activate fql_env
+conda env create -n <env_name> -f environment.yml
+conda activate <env_name>
 ```
 
 ## Usage
