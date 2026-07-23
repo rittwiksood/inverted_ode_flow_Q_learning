@@ -198,17 +198,6 @@ OGBench dataset files (e.g. `antmaze-large-navigate-v0.npz` and its `-val` count
 
 ## Citation
 
-If you use this code or build on these findings, please cite:
-
-```bibtex
-@inproceedings{your2027inverting,
-  title     = {Inverting the Behavioral Flow: Latent Noise Analysis for
-               Offline Reinforcement Learning via Flow Q-Learning},
-  author    = {},
-  booktitle = {},
-  year      = {2027}
-}
-```
 
 This work builds on Flow Q-Learning:
 
@@ -222,7 +211,3 @@ This work builds on Flow Q-Learning:
 ```
 
 ---
-
-## Acknowledgments
-
-This project is developed at Purdue University. It builds directly on the [Flow Q-Learning](https://github.com/seohongpark/fql) codebase and the [OGBench](https://github.com/seohongpark/ogbench) benchmark suite.
