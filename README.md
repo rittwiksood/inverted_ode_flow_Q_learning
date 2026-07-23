@@ -5,7 +5,6 @@
 ### Latent Noise Analysis for Offline Reinforcement Learning via Flow Q-Learning
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 </div>
 
