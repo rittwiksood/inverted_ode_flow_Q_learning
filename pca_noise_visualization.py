@@ -24,7 +24,7 @@ DESIGN
 
 USAGE
   python pca_noise_visualization.py \
-      --exp_dir  exp/fql/Debug/<run> \
+      --exp_dir  <run_location> \
       --mode     both \
       --strategy quality \
       --fracs    0.1,0.3,0.5 \
