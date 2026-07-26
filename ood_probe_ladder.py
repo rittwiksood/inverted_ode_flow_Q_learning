@@ -3,9 +3,9 @@ ood_probe_ladder.py
 ===================
 Out-of-support probe ladder for FQL ODE inversion.
 
-Tests whether the flow's distributional normalization (Findings 1-3)
-breaks OUTSIDE the training support -- the regime required by the
-OOD-action-detection use case (Section VIII).
+Tests whether the flow's distributional normalization 
+breaks OUTSIDE the training support, the regime required by the
+OOD-action-detection use case 
 
 PROBE LADDER (each rung shares obs/action dims with training env):
   rung 0  control            uniform random subset of training (s, a)
@@ -13,10 +13,6 @@ PROBE LADDER (each rung shares obs/action dims with training env):
                              sigma sweep {0.1, 0.3, 0.5, 1.0}
   rung 2  shuffled pairs     (s_i, a_{pi(i)}): marginals identical,
                              state-action coupling destroyed (Case 3 probe)
-  rung 3  cross-dataset      (s, a) from another dataset variant of the
-                             same env family (optional: --cross_env_name)
-  rung 4  alt-policy         actions from a differently trained agent
-                             at training states (optional: --alt_exp_dir)
   rung 5  uniform actions    a ~ Uniform[-1, 1]^d at training states
 
 METRICS
@@ -38,16 +34,10 @@ METRICS
 USAGE
 -----
 python ood_probe_ladder.py \
-    --exp_dir  exp/fql/Debug/sd000_s_10954661.0.20260606_171910 \
+    --exp_dir  <build_folder>\
     --n_probe  2000 \
     --save_dir analysis/ood_ladder
 
-# with the optional rungs:
-python ood_probe_ladder.py \
-    --exp_dir        exp/.../cube_double_run \
-    --cross_env_name cube-double-noisy-singletask-v0 \
-    --alt_exp_dir    exp/.../cube_double_run_seed1 \
-    --n_probe 2000 --save_dir analysis/ood_ladder
 """
 
 from __future__ import annotations
@@ -68,7 +58,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 # ================================================================
-# 1.  Metrics (self-contained; no imports from other analysis files)
+# 1.  Metrics 
 # ================================================================
 
 def compute_mmd(X, Y, sigma=None, n_subsample=2000):
