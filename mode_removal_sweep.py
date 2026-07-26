@@ -8,8 +8,8 @@ becomes non-linear.
 USAGE
 -----
 python mode_removal_sweep.py \
-    --exp_dir   exp/fql/Debug/sd000_s_10954661.0.20260606_171910 \
-    --x0_path   exp/fql/Debug/sd000_s_10954661.0.20260606_171910/x0_all.npy \
+    --exp_dir   <build_folder>
+    --x0_path   <biuld_folder>\x0_all.npy \
     --target_dim 0 \
     --mode_sign  1 \
     --n_steps    20 \
