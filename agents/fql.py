@@ -48,7 +48,7 @@ class FQLAgent(flax.struct.PyTreeNode):
         batch_size, action_dim = batch['actions'].shape
         rng, x_rng, t_rng = jax.random.split(rng, 3)
 
-        # BC flow loss.
+        # BC flow loss
         x_0 = jax.random.normal(x_rng, (batch_size, action_dim))
         x_1 = batch['actions']
         t = jax.random.uniform(t_rng, (batch_size, 1))
@@ -58,14 +58,14 @@ class FQLAgent(flax.struct.PyTreeNode):
         pred = self.network.select('actor_bc_flow')(batch['observations'], x_t, t, params=grad_params)
         bc_flow_loss = jnp.mean((pred - vel) ** 2)
 
-        # Distillation loss.
+        # Distillation loss
         rng, noise_rng = jax.random.split(rng)
         noises = jax.random.normal(noise_rng, (batch_size, action_dim))
         target_flow_actions = self.compute_flow_actions(batch['observations'], noises=noises)
         actor_actions = self.network.select('actor_onestep_flow')(batch['observations'], noises, params=grad_params)
         distill_loss = jnp.mean((actor_actions - target_flow_actions) ** 2)
 
-        # Q loss.
+        # Q loss
         actor_actions = jnp.clip(actor_actions, -1, 1)
         qs = self.network.select('critic')(batch['observations'], actions=actor_actions)
         q = jnp.mean(qs, axis=0)
@@ -75,10 +75,10 @@ class FQLAgent(flax.struct.PyTreeNode):
             lam = jax.lax.stop_gradient(1 / jnp.abs(q).mean())
             q_loss = lam * q_loss
 
-        # Total loss.
+        # Total loss
         actor_loss = bc_flow_loss + self.config['alpha'] * distill_loss + q_loss
 
-        # Additional metrics for logging.
+        # Logging metrics
         actions = self.sample_actions(batch['observations'], seed=rng)
         mse = jnp.mean((actions - batch['actions']) ** 2)
 
@@ -170,7 +170,7 @@ class FQLAgent(flax.struct.PyTreeNode):
         if self.config['encoder'] is not None:
             observations = self.network.select('actor_bc_flow_encoder')(observations)
         actions = noises
-        # Euler method.
+        # Euler method
         for i in range(self.config['flow_steps']):
             t = jnp.full((*observations.shape[:-1], 1), i / self.config['flow_steps'])
             vels = self.network.select('actor_bc_flow')(observations, actions, t, is_encoded=True)
@@ -189,7 +189,7 @@ class FQLAgent(flax.struct.PyTreeNode):
             observations = self.network.select('actor_bc_flow_encoder')(observations)
         dt = 1.0 / self.config['flow_steps']
         x = x_1
-        # Reverse Euler method.
+        # Reverse Euler method
         for i in range(self.config['flow_steps'] - 1, -1, -1):
             t = jnp.full((*observations.shape[:-1], 1), i / self.config['flow_steps'])
             pred = self.network.select('actor_bc_flow')(observations, x, t, is_encoded=True)
@@ -275,22 +275,22 @@ class FQLAgent(flax.struct.PyTreeNode):
 def get_config():
     config = ml_collections.ConfigDict(
         dict(
-            agent_name='fql',  # Agent name.
-            ob_dims=ml_collections.config_dict.placeholder(list),  # Observation dimensions (will be set automatically).
-            action_dim=ml_collections.config_dict.placeholder(int),  # Action dimension (will be set automatically).
-            lr=3e-4,  # Learning rate.
-            batch_size=256,  # Batch size.
-            actor_hidden_dims=(512, 512, 512, 512),  # Actor network hidden dimensions.
-            value_hidden_dims=(512, 512, 512, 512),  # Value network hidden dimensions.
-            layer_norm=True,  # Whether to use layer normalization.
-            actor_layer_norm=False,  # Whether to use layer normalization for the actor.
-            discount=0.99,  # Discount factor.
-            tau=0.005,  # Target network update rate.
-            q_agg='mean',  # Aggregation method for target Q values.
-            alpha=10.0,  # BC coefficient (need to be tuned for each environment).
-            flow_steps=10,  # Number of flow steps.
-            normalize_q_loss=False,  # Whether to normalize the Q loss.
-            encoder=ml_collections.config_dict.placeholder(str),  # Visual encoder name (None, 'impala_small', etc.).
+            agent_name='fql', 
+            ob_dims=ml_collections.config_dict.placeholder(list),  
+            action_dim=ml_collections.config_dict.placeholder(int),  
+            lr=3e-4, 
+            batch_size=256,  
+            actor_hidden_dims=(512, 512, 512, 512),  
+            value_hidden_dims=(512, 512, 512, 512),  
+            layer_norm=True,  
+            actor_layer_norm=False, 
+            discount=0.99,  
+            tau=0.005,  
+            q_agg='mean',  
+            alpha=10.0,  
+            flow_steps=10,  
+            normalize_q_loss=False,  
+            encoder=ml_collections.config_dict.placeholder(str),  
         )
     )
     return config
