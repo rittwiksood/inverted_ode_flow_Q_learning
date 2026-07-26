@@ -8,7 +8,7 @@ USAGE
 -----
 # Strategy 1 — random removal (baseline sanity check)
 python run_subset_analysis.py \
-    --exp_dir    exp/fql/Debug/seed0 \
+    --exp_dir    <build>/seed0 \
     --env_name   cube-single-play-singletask-v0 \
     --strategy   random \
     --removal_frac 0.30 \
@@ -17,7 +17,7 @@ python run_subset_analysis.py \
 
 # Strategy 2 — quality-based removal (low-Q transitions)
 python run_subset_analysis.py \
-    --exp_dir    exp/fql/Debug/seed0 \
+    --exp_dir    <build>/seed0 \
     --env_name   cube-single-play-singletask-v0 \
     --strategy   quality \
     --removal_frac 0.30 \
@@ -26,7 +26,7 @@ python run_subset_analysis.py \
 
 # Strategy 3 — state-region removal (remove a spatial region)
 python run_subset_analysis.py \
-    --exp_dir    exp/fql/Debug/seed0 \
+    --exp_dir    <build>/seed0 \
     --env_name   cube-single-play-singletask-v0 \
     --strategy   state_region \
     --region_dims 0,1 \
@@ -46,7 +46,7 @@ done
 import sys, os
 
 # Always point to the fql repo root regardless of where the script is called from
-FQL_ROOT = '/depot/gupta869/data/rittwik/fql'
+FQL_ROOT = '<build_root>' # Put root build location
 sys.path.insert(0, FQL_ROOT)
 
 import os
