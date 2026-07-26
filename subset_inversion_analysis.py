@@ -1,49 +1,7 @@
 """
 Dataset Subset Inversion & Noise Correlation Analysis
 =====================================================
-Grounded in: Park et al. (2025) "Flow Q-Learning", arXiv:2502.02538
 
-LITERATURE BASIS
-----------------
-1. Distribution shift & coverage in offline RL
-   - Levine et al. (2020) "Offline RL: Tutorial, Review..." arXiv:2005.01643
-     → Distribution shift between π_β and π_learned is the core challenge.
-       Removing action-states from 𝒟 induces an artificial shift we can measure.
-
-2. Data filtering in offline RL
-   - Xu et al. (2023) "Cross-domain Policy Adaptation via Value-Guided Data
-     Filtering", NeurIPS 2023
-   - Chen et al. (2024) "Sample-Efficient Policy Constraint Offline Deep RL
-     based on Sample Filtering", arXiv:2512.20115
-     → Pruning/filtering datasets changes the behavioral distribution in ways
-       that affect both the learned policy and the inferred latent noise.
-
-3. Imbalanced / sparse datasets
-   - Shi et al. (2023) "Offline RL with Imbalanced Datasets", arXiv:2307.02752
-     → Real-world offline datasets follow power-law state coverage; removing
-       action-states can mimic or exacerbate this imbalance.
-
-4. Divergence measures for generative models
-   - Gretton et al. (2012) "A Kernel Two-Sample Test", JMLR
-     → MMD with RBF kernel gives a consistent, non-parametric test of whether
-       two action distributions are the same.
-   - Villani (2009) "Optimal Transport: Old and New"
-     → 2-Wasserstein distance (W₂) is the natural companion to FQL's Eq. 8,
-       which already uses W₂ as its Wasserstein regulariser.
-
-5. Latent space correlation
-   - Hotelling (1936) "Relations Between Two Sets of Variates", Biometrika
-     → Canonical Correlation Analysis (CCA) measures the maximum linear
-       correlation between two multivariate noise spaces z and ẑ′.
-   - Kraskov et al. (2004) "Estimating Mutual Information", Phys. Rev. E
-     → k-NN mutual information estimator requires no density assumptions.
-
-PIPELINE
---------
-Step 1  Partition 𝒟 into full set 𝒟 and subset 𝒟′ (three removal strategies)
-Step 2  Measure W₁, W₂, KL, MMD, JSD divergence between action distributions
-Step 3  Invert the FQL BC flow ODE on 𝒟′ to recover noise ẑ′ = Φ⁻¹_θ(s, a′)
-Step 4  Correlate z (from x0_all.npy) with ẑ′ via Pearson, CCA, MI, W₂, KL
 """
 
 from __future__ import annotations
@@ -70,8 +28,8 @@ class DatasetPartitioner:
 
     Three strategies, each motivated by the literature:
 
-    'random'       -- uniform random removal (Shi et al., 2023 baseline)
-    'quality'      -- remove low-Q-value transitions (Xu et al., 2023)
+    'random'       -- uniform random removal 
+    'quality'      -- remove low-Q-value transitions 
     'state_region' -- remove a compact region of state space (Levine et al., 2020
                       coverage analysis; mimics the hallway/room scenario in
                       Ross & Bagnell, 2012)
@@ -111,8 +69,7 @@ class DatasetPartitioner:
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Remove the lowest-Q transitions (poor behavioural quality).
-        Motivated by Xu et al. (2023): value-guided data filtering.
-
+      
         Removing low-quality data makes 𝒟′ represent a higher-quality
         sub-policy π′_β ⊂ π_β. The noise divergence then measures
         how much the latent space shifts toward better behaviours.
@@ -164,8 +121,7 @@ def compute_mmd(
     n_subsample: int = 2000,
 ) -> float:
     """
-    Unbiased Maximum Mean Discrepancy (MMD²) with RBF kernel.
-    Gretton et al. (2012) JMLR.
+    Unbiased Maximum Mean Discrepancy with RBF kernel.
 
     MMD²(P, Q) = E[k(x,x)] - 2·E[k(x,y)] + E[k(y,y)]
     where k(x,y) = exp(-‖x−y‖²/(2σ²))
@@ -205,11 +161,11 @@ def compute_sliced_wasserstein(
     p:             int = 2,
 ) -> float:
     """
-    Sliced Wasserstein-p distance (Rabin et al., 2012).
+    Sliced Wasserstein-p distance
     Approximates W_p by averaging 1-D Wasserstein distances over
     random projections — scales to high-dimensional spaces.
 
-    For p=2 this approximates W₂, directly comparable to FQL Eq. 8.
+    For p=2 this approximates W₂
     """
     d   = X.shape[1]
     rng = np.random.RandomState(0)
@@ -268,8 +224,6 @@ def compute_kl_divergence(
     """
     KDE-based KL divergence per dimension, then averaged.
 
-    Uses scipy.stats.gaussian_kde with Scott's bandwidth rule.
-
     KL(P‖Q) — penalises where P has mass but Q does not (mode-covering).
     KL(Q‖P) — penalises where Q has mass but P does not (mode-seeking).
     kl_sym   = (KL(P‖Q) + KL(Q‖P)) / 2  — symmetric headline number.
@@ -325,13 +279,6 @@ def compute_wasserstein_per_dim(
 ) -> dict:
     """
     Exact 1-D Wasserstein-1 and Wasserstein-2 distances per dimension.
-
-    For 1-D distributions the Wasserstein-p distance has a closed form:
-        W_p(P, Q) = ( ∫₀¹ |F_P⁻¹(u) − F_Q⁻¹(u)|^p du )^{1/p}
-    which reduces to comparing sorted arrays (quantile functions).
-
-    This is exact — no approximation, no kernel, no projections.
-    W2 per-dim is directly comparable to FQL Eq. 8.
 
     Returns:
         w1_mean    : mean W1 across dimensions
@@ -503,8 +450,7 @@ def canonical_correlation_analysis(
 ) -> dict:
     """
     Canonical Correlation Analysis (CCA) between z and ẑ′.
-    Hotelling (1936) "Relations Between Two Sets of Variates."
-
+    
     CCA finds linear combinations of z and ẑ′ that are maximally
     correlated. Canonical correlations ρ_1 ≥ ... ≥ ρ_d give a
     dimension-wise measure of linear alignment between noise spaces.
@@ -549,7 +495,7 @@ def knn_mutual_information(
     n_subsample: int = 3000,
 ) -> float:
     """
-    k-NN mutual information estimator (Kraskov et al., 2004).
+    k-NN mutual information estimator
     Estimates MI(z; ẑ′) without any density assumptions.
 
     High MI → knowing z tells you a lot about ẑ′.
