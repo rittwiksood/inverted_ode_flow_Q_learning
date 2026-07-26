@@ -1,5 +1,5 @@
 # Define your base configurations
-base_exp="exp/fql/Debug/sd000_s_11165720.0.20260705_163909/"
+base_exp="<build_run_folder>"
 strategies=("random" "quality" "state_region")
 
 # Loop through each strategy
