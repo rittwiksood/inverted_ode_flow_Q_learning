@@ -1,45 +1,9 @@
-<div align="center">
+# Inverting the Flow: Latent-Space Auditing for Offline Reinforcement Learning
 
-# Flow Q-Learning: Inverting the Behavioral Flow
-
-### Latent Noise Analysis for Offline Reinforcement Learning via Flow Q-Learning
-
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
-
-</div>
-
----
 
 ## Overview
 
-This repository implements an **ODE inversion pipeline** for Flow Q-Learning (FQL) — a data-driven offline RL algorithm that uses a flow-matching policy to model complex, multimodal action distributions.
-
-FQL trains a behavioral-cloning (BC) flow that transports a standard Gaussian noise space onto the behavioral action distribution via a learned vector field. This repository builds the **inverse map**: given a trained flow, a state, and an action, we integrate the vector field backward in time to recover the latent noise that produced (or could have produced) that action, and we study the distributional properties of the recovered noise across:
-
-- **Various controlled dataset-perturbation conditions** (3 removal strategies × 9 removal fractions × 3 environments)
-- **A single-mode deletion stress test** that pushes action-space divergence far beyond the perturbation grid
-- **An out-of-support probe ladder** that tests the inverse map on actions and state–action pairings the flow never saw during training
-
-
----
-
-## Table of Contents
-
-- [Installation](#installation)
-- [Usage](#usage)
-- [Reproducing the Main Results](#reproducing-the-main-results)
-  - [1. Train the base agents](#1-train-the-base-agents)
-  - [2. Dataset subset-inversion grid](#2-dataset-subset-inversion-grid)
-  - [3. Single-mode removal stress test](#3-single-mode-removal-stress-test)
-  - [4. Out-of-support probe ladder](#4-out-of-support-probe-ladder)
-  - [5. PCA overlay teaser figure](#5-pca-overlay-teaser-figure)
-  - [6. Regenerate all paper figures](#6-regenerate-all-paper-figures)
-- [Repository Structure](#repository-structure)
-- [Notes on Data](#notes-on-data)
-- [Citation](#citation)
-- [Acknowledgments](#acknowledgments)
-
----
+This repository contains code for Behavior-Flow Inversion of an FQL agent. A trained FQL flow is a bijective map from a latent Gaussian noise space to the behavioral action distribution. We integrate the flow backward in time to recover the latent noise that produced (or could have produced) a given action, and we study the distributional properties of the recovered noise across various dataset-perturbation conditions. We borrowed the FQL agent implementation from the original FQL repository.
 
 ## Installation
 
@@ -47,27 +11,22 @@ FQL trains a behavioral-cloning (BC) flow that transports a standard Gaussian no
 conda env create -n <env_name> -f environment.yml
 conda activate <env_name>
 ```
-
-## Usage
-
-The main implementation of FQL is in [`agents/fql.py`](agents/fql.py). All analysis scripts described below operate on a trained agent's checkpoint directory (containing `flags.json` and `params_*.pkl`).
-
----
-
 ## Reproducing the Main Results
 
-### 1. Train the base agents
+### 1. Train FQL Agents on OGBench Environments
 
-The paper reports results on three OGBench environments, chosen to span different task families, action dimensionalities, and regularization strengths.
+The paper reports results on three OGBench environments.
 
-**Primary environment (antmaze, d = 8):**
+**Primary Environment (antmaze-large-navigate-singletask-v0):**
 ```bash
 python main.py --env_name=antmaze-large-navigate-singletask-v0 --agent.q_agg=min --agent.alpha=10
 ```
 
-**Additional environments used for the cross-environment comparison:**
+**Additional Environments:**
 ```bash
+# cube-single-play-singletask-v0
 python main.py --env_name=cube-single-play-singletask-v0 --agent.alpha=300
+# humanoidmaze-medium-navigate-singletask-v0
 python main.py --env_name=humanoidmaze-medium-navigate-singletask-v0 --agent.discount=0.995 --agent.alpha=30
 ```
 
@@ -75,7 +34,7 @@ Each run produces a checkpoint directory under `exp/fql/Debug/<run_name>/`.
 
 ---
 
-### 2. Dataset subset-inversion grid
+### 2. Prepare Data 
 
 Runs the three removal strategies (random, quality-guided, state-region) crossed with nine removal fractions (10%–90%), inverts the removed transitions, and computes the full action-space and noise-space divergence suite. For the specific result we have put in the paper, we have used 'quality' strategy and removal fraction as 30%. We can change that if we want to see another result. We can remove --strategy and --removal_frac line if we want all the files for all removal strategies.  
 
