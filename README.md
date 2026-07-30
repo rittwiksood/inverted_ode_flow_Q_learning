@@ -32,6 +32,7 @@ python main.py --env_name=cube-single-play-singletask-v0 --agent.alpha=300
 python main.py --env_name=humanoidmaze-medium-navigate-singletask-v0 --agent.discount=0.995 --agent.alpha=30
 ```
 
+For each of the following result, replace <build_folder>, with the folder after you train for a particular environment. 
 
 ### 2. Out-of-support probe ladder
 
