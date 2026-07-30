@@ -45,7 +45,7 @@ python ood_probe_ladder.py \
     --save_dir analysis/ood_ladder
 ```
 
-Produces `ood_ladder_metrics.json` (containing the KS statistic, symmetric KL, tail mass, and AUROC for every probe) plus the four-panel figure. This is the source of the AUROC values reported in the paper's out-of-distribution detection results in Table 1. In supplementary text, Table 1 also reports values from this script for various environements.
+**Output**: Produces `ood_ladder_metrics.json` (containing the KS statistic, symmetric KL, tail mass, and AUROC for every probe). This is the source of the AUROC values reported in the paper's out-of-distribution detection results in Table 1. In supplementary text, Table 1 also reports values from this script for various environements.
 
 ---
 
@@ -63,6 +63,7 @@ python pca_insupport_vs_ood.py \
     --save_dir  figures/
 ```
 
+**Output**: PCA overlay figure (pca_overlay_quality_shuffled.png/.pdf) that is Fig. 1 in paper. 
 
 ## Notes on Data
 
