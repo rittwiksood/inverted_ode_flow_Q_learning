@@ -73,7 +73,7 @@ OGBench dataset files (e.g. `antmaze-large-navigate-v0.npz` and its `-val` count
 ## Citation
 
 
-This work builds on Flow Q-Learning:
+This work builds on Flow Q-Learning presented by following authors (not the authors of this paper):
 
 ```bibtex
 @inproceedings{park2025flow,
