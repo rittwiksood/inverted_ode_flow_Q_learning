@@ -1,29 +1,6 @@
 """
 pca_insupport_vs_ood.py
 =======================
-ONE figure: in-support and OOD recovered noise overlaid on the SAME
-PCA axes, for ONE removal technique, at THREE removal percentages.
-
-For each removal fraction rho (default 10/30/50%):
-  * take the removed subset of the chosen strategy (e.g. quality),
-  * IN-SUPPORT cloud : invert the subset's true (s, a) pairs,
-  * OOD cloud        : invert the SAME states with an OOD probe
-                       applied to the SAME actions
-                       (shuffled | gauss | uniform),
-  * plot both clouds in one panel, in a common PCA basis fit on a
-    full-data control inversion, with prior 1/2/3-sigma rings.
-
-A fourth panel overlays the ||z_hat||^2 ECDFs of all clouds against
-the chi^2(d) reference -- the per-action OOD score, seen directly.
-
-USAGE
-  python pca_insupport_vs_ood.py \
-      --exp_dir  exp/fql/Debug/<run> \
-      --strategy quality \
-      --fracs    0.1,0.3,0.5 \
-      --ood_probe shuffled \
-      --n 2000 --save_dir analysis/pca_overlay
-  # gauss probe:  --ood_probe gauss --sigma 0.5
 """
 
 from __future__ import annotations
@@ -42,7 +19,7 @@ from scipy.stats import chi2
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
-# ---------------- shared helpers (same as pca_noise_visualization) ----
+# ---------------- shared helpers ----
 
 def invert_batched(agent, obs, acts, batch_size=256):
     import jax.numpy as jnp
