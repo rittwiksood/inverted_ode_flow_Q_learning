@@ -22,6 +22,8 @@ The paper reports results on three OGBench environments.
 python main.py --env_name=antmaze-large-navigate-singletask-v0 --agent.q_agg=min --agent.alpha=10
 ```
 
+This creates <build_folder> containing flags.json and params_*.pkl , the checkpoint every downstream script reads.
+
 **Additional Environments:**
 ```bash
 # cube-single-play-singletask-v0
@@ -30,67 +32,29 @@ python main.py --env_name=cube-single-play-singletask-v0 --agent.alpha=300
 python main.py --env_name=humanoidmaze-medium-navigate-singletask-v0 --agent.discount=0.995 --agent.alpha=30
 ```
 
-Each run produces a checkpoint directory under `exp/fql/Debug/<run_name>/`.
 
----
-
-### 2. Prepare Data 
-
-Runs the three removal strategies (random, quality-guided, state-region) crossed with nine removal fractions (10%–90%), inverts the removed transitions, and computes the full action-space and noise-space divergence suite. For the specific result we have put in the paper, we have used 'quality' strategy and removal fraction as 30%. We can change that if we want to see another result. We can remove --strategy and --removal_frac line if we want all the files for all removal strategies.  
-
-```bash
-python run_subset_analysis.py \
-    --exp_dir  exp/fql/Debug/<antmaze_run> \
-    --strategy quality \
-    --removal_frac 0.30 \
-    --save_dir analysis/subset_grid
-```
-
-Repeat with `--exp_dir` pointing at the cube-single and humanoidmaze checkpoints to reproduce all **81 grid conditions**. Each run writes one JSON per (strategy, fraction) condition; these are consolidated into `consolidated_data*.txt` files, one per environment, used by all downstream analysis and plotting scripts.
-
----
-
-### 3. Single-mode removal stress test
-
-Progressively deletes the `+1` action mode of one dimension in 5% increments, driving action-space divergence far beyond anything reachable by the grid strategies.
-
-```bash
-python mode_removal_sweep.py \
-    --exp_dir     exp/fql/Debug/<antmaze_run> \
-    --x0_path     exp/fql/Debug/<antmaze_run>/x0_all.npy \
-    --target_dim  0 \
-    --mode_sign   1 \
-    --n_steps     20 \
-    --max_samples 10000 \
-    --save_dir    analysis/mode_sweep
-```
-
-Produces `mode_sweep_metrics.json` along with divergence and distribution-shift figures. `x0_all.npy` is the exact training-time noise, recovered by replaying the training random-number-generator chain; it is required here to establish ground-truth (z, s, a) triples.
-
----
-
-### 4. Out-of-support probe ladder
+### 2. Out-of-support probe ladder
 
 Constructs seven probe sets — in-support control, four levels of Gaussian action corruption, shuffled state–action pairs, and uniform random actions — inverts each through the trained flow, and scores every action against the Gaussian prior.
 
 ```bash
 python ood_probe_ladder.py \
-    --exp_dir  exp/fql/Debug/<antmaze_run> \
+    --exp_dir  <build_folder> \
     --n_probe  2000 \
     --save_dir analysis/ood_ladder
 ```
 
-Produces `ood_ladder_metrics.json` (containing the KS statistic, symmetric KL, tail mass, and AUROC for every probe) plus the four-panel ladder figure. This is the source of the AUROC values reported in the paper's out-of-distribution detection results.
+Produces `ood_ladder_metrics.json` (containing the KS statistic, symmetric KL, tail mass, and AUROC for every probe) plus the four-panel figure. This is the source of the AUROC values reported in the paper's out-of-distribution detection results in Table 1. In supplementary text's Table 1 also reports values from this script.
 
 ---
 
-### 5. PCA overlay teaser figure
+### 3. PCA overlay teaser figure
 
 Projects recovered noise from in-support and out-of-support actions into a single common PCA basis, at three removal fractions, for direct visual comparison.
 
 ```bash
 python pca_insupport_vs_ood.py \
-    --exp_dir   exp/fql/Debug/<antmaze_run> \
+    --exp_dir   <build_folder> \
     --strategy  quality \
     --fracs     0.1,0.3,0.5 \
     --ood_probe shuffled \
@@ -98,42 +62,6 @@ python pca_insupport_vs_ood.py \
     --save_dir  figures/
 ```
 
-A separate script producing independent (non-overlaid) in-support and OOD PCA panels is available in `pca_noise_visualization.py`.
-
----
-
-### 6. Regenerate all paper figures
-
-Reproduces every main-text figure directly from the logged JSON metrics, in one command:
-
-```bash
-python make_paper_figures.py \  
-    --ood_json  analysis/ood_ladder/ood_ladder_metrics.json \
-    --outdir    paper_figures
-```
-
----
-
-## Repository Structure
-
-```text
-.
-├── agents/
-│   └── fql.py                      # FQL agent implementation
-├── run_subset_analysis.py          # dataset-partitioning + inversion grid runner
-├── subset_inversion_analysis.py    # partitioning strategies, divergence + correlation metrics
-├── mode_removal_sweep.py           # single-mode deletion stress test
-├── ood_probe_ladder.py             # out-of-support probe construction and scoring
-├── pca_insupport_vs_ood.py         # common-basis PCA overlay figure (in-support vs OOD)
-├── pca_noise_visualization.py      # separate in-support / OOD PCA figures
-├── make_paper_figures.py           # reproduces all main-text figures from logged JSON
-├── consolidated_data*.txt          # raw per-condition metric JSONs, one file per environment
-├── analysis/                       # output directory for grid, mode-sweep, and ladder runs
-├── paper_figures/                  # regenerated vector figures
-└── environment.yml                 # conda environment specification
-```
-
----
 
 ## Notes on Data
 
