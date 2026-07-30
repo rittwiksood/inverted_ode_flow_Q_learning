@@ -1,12 +1,5 @@
 """
-ood_probe_ladder.py
-===================
-Out-of-support probe ladder for FQL ODE inversion.
-
-Tests whether the flow's distributional normalization 
-breaks OUTSIDE the training support, the regime required by the
-OOD-action-detection use case 
-
+Out-of-support experiments for FQL ODE inversion.
 """
 
 from __future__ import annotations
@@ -22,14 +15,13 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2
+import jax
+import jax.numpy as jnp
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
-# ================================================================
-# 1.  Metrics 
-# ================================================================
-
+# Metrics 
 def compute_mmd(X, Y, sigma=None, n_subsample=2000):
     """Unbiased MMD^2 with RBF kernel, median-heuristic bandwidth."""
     rng = np.random.RandomState(0)
@@ -54,7 +46,7 @@ def compute_mmd(X, Y, sigma=None, n_subsample=2000):
 
 
 def w1_per_dim_mean(X, Y):
-    """Exact 1-D W1 per dimension (scipy), averaged across dims."""
+    """Exact 1-D W1 per dimension, averaged across dims."""
     d = X.shape[1]
     return float(np.mean([
         stats.wasserstein_distance(X[:, j], Y[:, j]) for j in range(d)
@@ -62,8 +54,7 @@ def w1_per_dim_mean(X, Y):
 
 
 def w2_per_dim(X, Y):
-    """Exact 1-D W2 per dimension via sorted quantile arrays.
-    Use ONLY with len(X) == len(Y) (see Finding 7)."""
+    """Exact 1-D W2 per dimension via sorted quantile arrays."""
     d = X.shape[1]
     n = min(len(X), len(Y))
     out = []
@@ -75,7 +66,7 @@ def w2_per_dim(X, Y):
 
 
 def kl_kde_sym(X, Y, n_points=500):
-    """Symmetric KL via per-dim KDE (Scott bandwidth), averaged."""
+    """Symmetric KL via per-dim KDE, averaged."""
     d = X.shape[1]
     kls = []
     for j in range(d):
@@ -101,10 +92,13 @@ def kl_kde_sym(X, Y, n_points=500):
 
 def noise_metrics(z_hat, z_ref, label=""):
     """
-    Compare recovered noise against the PRIOR.
-      z_hat: (n, d) recovered noise
-      z_ref: (n, d) fresh N(0, I) reference sample (same n)
-    Returns dict of prior-referenced metrics.
+    Compare recovered noise against the prior.
+    Returns a dict of metrics:
+      1. KS statistic and p-value
+      2. symmetric KL via per-dim KDE
+      3. W2 per dimension and mean
+      4. max absolute mean and std deviation per dimension
+      5. fraction of ||z||^2 beyond 95th and 99th percentile of chi^2(d)
     """
     n, d = z_hat.shape
     flat = z_hat.flatten()
@@ -129,14 +123,14 @@ def noise_metrics(z_hat, z_ref, label=""):
         w2_noise_per_dim=w2_dims.tolist(),
         dim_mean_max=float(dim_mean.max()),
         dim_std_dev_max=float(dim_std.max()),
-        sq_norms=sq_norms,                    # kept for AUROC / plots
+        sq_norms=sq_norms,
         frac_beyond_95=frac_beyond_95,
         frac_beyond_99=frac_beyond_99,
     )
 
 
 def auroc_vs_control(scores_probe, scores_control):
-    """AUROC for separating probe from control using ||z||^2."""
+    """AUROC for separating experiments from in-support using ||z||^2."""
     try:
         from sklearn.metrics import roc_auc_score
         y = np.concatenate([np.zeros(len(scores_control)),
@@ -151,24 +145,18 @@ def auroc_vs_control(scores_probe, scores_control):
         return float(u / (len(scores_probe) * len(scores_control)))
 
 
-# ================================================================
-# 2.  Probe constructors
-# ================================================================
 
+# Experiments builder
 def build_probes(obs, acts, rng, sigmas, d,
                  cross_obs=None, cross_acts=None,
                  alt_actions=None, clip_probes=True):
-    """
-    Build the probe ladder. Every probe: dict(name, rung, obs, acts).
-    obs, acts: the control pool (n_probe rows each, from training data).
-    """
     n = len(acts)
     probes = []
 
-    # rung 0 -- control (in-support)
+    # control (in-support)
     probes.append(dict(name='control', rung=0, obs=obs, acts=acts))
 
-    # rung 1 -- Gaussian-perturbed dataset actions (sigma sweep)
+    # Gaussian-perturbed dataset actions (various sigma levels)
     for s in sigmas:
         pert = acts + s * rng.randn(*acts.shape).astype(np.float32)
         if clip_probes:
@@ -176,35 +164,30 @@ def build_probes(obs, acts, rng, sigmas, d,
         probes.append(dict(name=f'gauss_{s:g}', rung=1, sigma=s,
                            obs=obs, acts=pert.astype(np.float32)))
 
-    # rung 2 -- shuffled pairs (identical marginals, broken coupling)
+    # Shuffled pairs (identical marginals, shuffled coupling)
     perm = rng.permutation(n)
     probes.append(dict(name='shuffled_pairs', rung=2,
                        obs=obs, acts=acts[perm]))
 
-    # rung 3 -- cross-dataset (optional)
+    # Cross-dataset
     if cross_obs is not None and cross_acts is not None:
         probes.append(dict(name='cross_dataset', rung=3,
                            obs=cross_obs, acts=cross_acts))
 
-    # rung 4 -- alt-policy actions at training states (optional)
+    # Alt-policy actions at training states
     if alt_actions is not None:
         probes.append(dict(name='alt_policy', rung=4,
                            obs=obs, acts=alt_actions))
 
-    # rung 5 -- uniform random actions at training states
+    # Uniform random actions at training states
     uni = rng.uniform(-1.0, 1.0, size=(n, d)).astype(np.float32)
     probes.append(dict(name='uniform_actions', rung=5,
                        obs=obs, acts=uni))
 
     return probes
 
-
-# ================================================================
-# 3.  Batched inversion
-# ================================================================
-
+# Batched inversion
 def invert_batched(agent, obs, acts, batch_size=256):
-    import jax.numpy as jnp
     n, d = acts.shape
     out = np.zeros((n, d), dtype=np.float32)
     for s in range(0, n, batch_size):
@@ -215,10 +198,8 @@ def invert_batched(agent, obs, acts, batch_size=256):
     return out
 
 
-# ================================================================
-# 4.  Main experiment
-# ================================================================
 
+# Main experiments
 def run_ladder(agent, obs_pool, acts_pool, sigmas, n_probe, seed,
                save_dir, cross_obs=None, cross_acts=None,
                alt_agent=None, clip_probes=True,
@@ -227,19 +208,18 @@ def run_ladder(agent, obs_pool, acts_pool, sigmas, n_probe, seed,
     rng = np.random.RandomState(seed)
     d = acts_pool.shape[1]
 
-    # control pool
+    # Control pool
     idx = rng.choice(len(acts_pool), n_probe, replace=False)
     obs_c, acts_c = obs_pool[idx], acts_pool[idx]
 
-    # rung 4 actions generated AT THE CONTROL STATES for alignment
+    # Actions generated at the control states for alignment
     alt_actions = None
     if alt_agent is not None:
-        import jax
         alt_actions = np.array(alt_agent.sample_actions(
             observations=obs_c, seed=jax.random.PRNGKey(seed)),
             dtype=np.float32)
 
-    # fixed Gaussian reference for prior-referenced W2 / KL
+    # Fixed Gaussian reference for prior-referenced W2 / KL
     z_ref = rng.randn(n_probe, d).astype(np.float32)
 
     probes = build_probes(obs_c, acts_c, rng, sigmas, d,
@@ -254,7 +234,7 @@ def run_ladder(agent, obs_pool, acts_pool, sigmas, n_probe, seed,
         name = p['name']
         print(f"\n[{name}] (rung {p['rung']})  n={len(p['acts'])}")
 
-        # --- action-side distinctiveness vs training pool ------------
+        # action-side distinctiveness vs training pool
         mmd = compute_mmd(acts_pool, p['acts'])
         w1 = w1_per_dim_mean(acts_pool, p['acts'])
         boundary_frac = float(np.mean(
@@ -262,17 +242,17 @@ def run_ladder(agent, obs_pool, acts_pool, sigmas, n_probe, seed,
         print(f"  action MMD^2={mmd:.4f}  W1={w1:.4f}  "
               f"boundary_frac={boundary_frac:.3f}")
 
-        # --- inversion ------------------------------------------------
+        # inversion
         z_hat = invert_batched(agent, p['obs'], p['acts'])
 
-        # --- noise-side metrics vs PRIOR -------------------------------
+        # noise-side metrics vs prior
         nm = noise_metrics(z_hat, z_ref)
         print(f"  noise  KS={nm['ks_stat']:.4f}  KL={nm['kl_noise_sym']:.4f}  "
               f"W2={nm['w2_noise_mean']:.4f}  "
               f"tail95={nm['frac_beyond_95']:.3f}  "
               f"tail99={nm['frac_beyond_99']:.3f}")
 
-        # --- saturation-filtered variant -------------------------------
+        # saturation-filtered variant
         keep = np.max(np.abs(p['acts']), axis=1) <= saturation_thresh
         nm_filt = None
         if keep.sum() >= 200 and keep.sum() < len(keep):
@@ -281,7 +261,7 @@ def run_ladder(agent, obs_pool, acts_pool, sigmas, n_probe, seed,
                   f"KS={nm_filt['ks_stat']:.4f}  "
                   f"KL={nm_filt['kl_noise_sym']:.4f}")
 
-        # --- AUROC vs control ------------------------------------------
+        # AUROC vs control
         if name == 'control':
             control_sq_norms = nm['sq_norms']
             auroc = 0.5
@@ -302,10 +282,7 @@ def run_ladder(agent, obs_pool, acts_pool, sigmas, n_probe, seed,
     _save_json(results, save_dir)
     return results
 
-
-# ================================================================
-# 5.  Figures
-# ================================================================
+# Figures
 
 def _plot_ladder(results, d, save_dir):
     names = [r['name'] for r in results]
@@ -320,7 +297,7 @@ def _plot_ladder(results, d, save_dir):
                  "Distributional Normalizer", fontsize=13,
                  fontweight='bold')
 
-    # (A) noise KS and KL per rung
+    # noise KS and KL per rung
     ax = axes[0, 0]
     x = np.arange(len(names))
     ax.bar(x - 0.2, ks, 0.4, label='KS stat', color='#2a78d6', alpha=0.85)
@@ -337,7 +314,7 @@ def _plot_ladder(results, d, save_dir):
     l2, lb2 = ax2.get_legend_handles_labels()
     ax.legend(l1 + l2, lb1 + lb2, fontsize=8)
 
-    # (B) dose-response: action MMD^2 (log x) vs noise KL
+    # action MMD^2 (log x) vs noise KL
     ax = axes[0, 1]
     colors = plt.cm.viridis(np.linspace(0, 1, len(results)))
     for i, r in enumerate(results):
@@ -352,7 +329,7 @@ def _plot_ladder(results, d, save_dir):
     ax.set_title('(B) Dose-response across the support boundary')
     ax.legend(fontsize=7, ncol=2)
 
-    # (C) ||z||^2 distributions vs chi^2(d)
+    # ||z||^2 distributions vs chi^2(d)
     ax = axes[1, 0]
     xs = np.linspace(0, max(np.percentile(r['noise']['sq_norms'], 99.5)
                             for r in results) * 1.05, 400)
@@ -366,7 +343,7 @@ def _plot_ladder(results, d, save_dir):
     ax.set_title('(C) Recovered-noise squared norms vs prior')
     ax.legend(fontsize=7, ncol=2)
 
-    # (D) AUROC + tail mass per rung
+    # AUROC + tail mass per rung
     ax = axes[1, 1]
     ax.bar(x - 0.2, auroc, 0.4, color='#1baf7a', alpha=0.85,
            label='AUROC vs control')
@@ -392,7 +369,7 @@ def _plot_ladder(results, d, save_dir):
 def _save_json(results, save_dir):
     def ser(o):
         if isinstance(o, np.ndarray):
-            return None                       # drop bulky arrays
+            return None
         if isinstance(o, (np.floating, float)):
             return float(o)
         if isinstance(o, (np.integer, int)):
@@ -407,10 +384,7 @@ def _save_json(results, save_dir):
         json.dump(ser(results), f, indent=2)
     print(f"  -> Metrics saved: {out}")
 
-
-# ================================================================
-# 6.  CLI
-# ================================================================
+# cli tools
 
 def _load_env_dataset(env_name, frame_stack):
     from envs.env_utils import make_env_and_datasets
@@ -484,7 +458,6 @@ def main():
     d = acts_pool.shape[1]
     print(f"Env {env_name}: pool n={n_pool}, action dim d={d}")
 
-    # optional rung 3
     cross_obs = cross_acts = None
     if args.cross_env_name:
         cds = _load_env_dataset(args.cross_env_name, frame_stack)
@@ -497,7 +470,6 @@ def main():
                "cross env must match obs/action dims"
         print(f"Rung 3 enabled: {args.cross_env_name}")
 
-    # optional rung 4
     alt_agent = None
     if args.alt_exp_dir:
         alt_agent, _ = _load_agent(args.alt_exp_dir, dataset)

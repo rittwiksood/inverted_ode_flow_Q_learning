@@ -1,6 +1,5 @@
 """
 pca_insupport_vs_ood.py
-=======================
 """
 
 from __future__ import annotations
@@ -19,10 +18,9 @@ from scipy.stats import chi2
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
-# ---------------- shared helpers ----
+# helpers
 
 def invert_batched(agent, obs, acts, batch_size=256):
-    import jax.numpy as jnp
     n, d = acts.shape
     out = np.zeros((n, d), dtype=np.float32)
     for s in range(0, n, batch_size):
@@ -90,13 +88,9 @@ def make_ood_actions(acts, probe, sigma, rng, d):
     raise ValueError(probe)
 
 
-# ---------------- figure ----------------------------------------------
+# figures
 
 def overlay_figure(pairs, z_control, d, probe_label, save_path, seed=0):
-    """
-    pairs : list of (panel_title, z_insupport, z_ood)
-    z_control : (n, d) control inversion used to fit the common basis.
-    """
     from sklearn.decomposition import PCA
     pca = PCA(n_components=2).fit(z_control)
     evr = pca.explained_variance_ratio_
@@ -135,7 +129,7 @@ def overlay_figure(pairs, z_control, d, probe_label, save_path, seed=0):
         ax.set_ylabel(f'PC2 ({evr[1]*100:.0f}%)')
         ax.legend(fontsize=8, loc='upper left')
 
-    # ---- ECDF panel of ||z||^2 ----------------------------------
+    # ECDF of ||z||^2
     ax = axes[-1]
     xs = np.linspace(0, chi2.ppf(0.9999, d) * 4, 600)
     ax.plot(xs, chi2.cdf(xs, d), 'k-', lw=2,
@@ -160,9 +154,6 @@ def overlay_figure(pairs, z_control, d, probe_label, save_path, seed=0):
     plt.savefig(save_path.replace('.png', '.pdf'), bbox_inches='tight')
     plt.close()
     print(f"  -> Figure saved: {save_path}")
-
-
-# ---------------- main --------------------------------------------------
 
 def main():
     p = argparse.ArgumentParser()
@@ -202,7 +193,7 @@ def main():
         print("Computing Q-values ...")
         q_values = compute_q_values(agent, obs_pool, acts_pool)
 
-    # common-basis control: random in-support subset of the full pool
+    # common-basis control: random in-support subset
     cidx = rng.choice(n_pool, args.n, replace=False)
     print("Inverting control (basis fit) ...")
     z_control = invert_batched(agent, obs_pool[cidx], acts_pool[cidx])

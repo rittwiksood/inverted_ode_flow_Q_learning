@@ -21,8 +21,7 @@ The paper reports results on three OGBench environments.
 ```bash
 python main.py --env_name=antmaze-large-navigate-singletask-v0 --agent.q_agg=min --agent.alpha=10
 ```
-
-This creates <build_folder> containing flags.json and params_*.pkl , the checkpoint every downstream script reads.
+Each run produces a checkpoint directory under `exp/fql/Debug/<run_name>/` (Let `<build_folder>` be this directory). This contains flags.json and params_*.pkl, the checkpoint every downstream script reads.
 
 **Additional Environments:**
 ```bash
@@ -32,11 +31,11 @@ python main.py --env_name=cube-single-play-singletask-v0 --agent.alpha=300
 python main.py --env_name=humanoidmaze-medium-navigate-singletask-v0 --agent.discount=0.995 --agent.alpha=30
 ```
 
-For each of the following result, replace <build_folder>, with the folder after you train for a particular environment. 
+For each of the following results, replace `<build_folder>` with the folder for the corresponding training run.
 
-### 2. Out-of-support probe ladder
+### 2. Out-of-support Experiments
 
-Constructs seven probe sets : in-support control, four levels of Gaussian action corruption, shuffled state–action pairs, and uniform random actions, inverts each through the trained flow, and scores every action against the Gaussian prior.
+The below script experiments for the following: in-support control, four levels of Gaussian action corruption, shuffled state–action pairs, and uniform random actions, inverts each through the trained flow, and scores every action against the Gaussian prior.
 
 ```bash
 python ood_probe_ladder.py \
@@ -45,11 +44,11 @@ python ood_probe_ladder.py \
     --save_dir analysis/ood_ladder
 ```
 
-**Output**: Produces `ood_ladder_metrics.json` (containing the KS statistic, symmetric KL, tail mass, and AUROC for every probe). This is the source of the AUROC values reported in the paper's out-of-distribution detection results in Table 1. In supplementary text, Table 1 also reports values from this script for various environements.
+**Output**: Produces `ood_ladder_metrics.json` containing the KS statistic, symmetric KL, tail mass, and AUROC for every experiment.
 
 ---
 
-### 3. PCA overlay teaser figure
+### 3. PCA Plot of Recovered Noise
 
 Projects recovered noise from in-support and out-of-support actions into a single common PCA basis, at three removal fractions, for direct visual comparison.
 
@@ -63,26 +62,12 @@ python pca_insupport_vs_ood.py \
     --save_dir  figures/
 ```
 
-**Output**: PCA overlay figure (pca_overlay_quality_shuffled.png/.pdf) that is Fig. 1 in paper. 
+**Output**: Figure 1 of the main paper.
+
+---
 
 ## Notes on Data
 
 OGBench dataset files (e.g. `antmaze-large-navigate-v0.npz` and its `-val` counterpart) are downloaded automatically on first use of a given `--env_name`. No manual dataset preparation is required.
-
----
-
-## Citation
-
-
-This work builds on Flow Q-Learning presented by following authors (not the authors of this paper):
-
-```bibtex
-@inproceedings{park2025flow,
-  title     = {Flow Q-Learning},
-  author    = {Park, Seohong and Li, Qiyang and Levine, Sergey},
-  booktitle = {Proceedings of the 42nd International Conference on Machine Learning (ICML)},
-  year      = {2025}
-}
-```
 
 ---
