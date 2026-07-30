@@ -45,7 +45,7 @@ python ood_probe_ladder.py \
     --save_dir analysis/ood_ladder
 ```
 
-Produces `ood_ladder_metrics.json` (containing the KS statistic, symmetric KL, tail mass, and AUROC for every probe) plus the four-panel figure. This is the source of the AUROC values reported in the paper's out-of-distribution detection results in Table 1. In supplementary text's Table 1 also reports values from this script.
+Produces `ood_ladder_metrics.json` (containing the KS statistic, symmetric KL, tail mass, and AUROC for every probe) plus the four-panel figure. This is the source of the AUROC values reported in the paper's out-of-distribution detection results in Table 1. In supplementary text, Table 1 also reports values from this script for various environements.
 
 ---
 
